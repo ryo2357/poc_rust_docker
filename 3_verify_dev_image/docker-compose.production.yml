@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+  server:
+    image: 3_production_server_image
+    container_name: 3_server_prod
+    build:
+      context: $PWD/server
+      dockerfile: $PWD/.devcontainer/server.dockerfile
+      target: production
+    tty: true

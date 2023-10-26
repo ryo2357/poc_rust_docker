@@ -1,0 +1,3 @@
+{
+  "rust-analyzer.linkedProjects": ["./3_verify_dev_image/server/Cargo.toml"]
+}

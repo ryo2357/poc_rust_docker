@@ -1,0 +1,19 @@
+{
+  "name": "rust",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "../docker-compose.override.yml"
+  ],
+  "service": "server",
+  "remoteUser": "rust",
+  "workspaceFolder": "/usr/src/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "bungcip.better-toml",
+        "serayuzgur.crates"
+      ]
+    }
+  }
+}

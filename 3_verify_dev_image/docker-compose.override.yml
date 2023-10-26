@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  server:
+    # イメージ名が重複しているとキャッシュ？（保存されたイメージ）から作られる
+    image: 3_dev_server_image
+    # コンテナ名
+    container_name: 3_server_dev
+    build:
+      context: $PWD/server
+      dockerfile: $PWD/.devcontainer/server.dockerfile
+      target: development
+    tty: true
+    volumes:
+      - $PWD/server:/usr/src/app
+      # キャッシュはマウントフォルダに作成されないようにする
+      #  ⇒ ホストのコード領域に入って来ないようにする
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+      # ホストでビルドした
+      - host-target-cache:/usr/src/app/target
+    environment:
+      CARGO_TARGET_DIR: /app/target
+    command: /bin/sh -c "cargo watch -x run"
+
+volumes:
+  cargo-cache:
+  host-target-cache:
+  target-cache:
