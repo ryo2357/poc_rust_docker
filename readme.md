@@ -47,6 +47,29 @@ Docker 環境での Rust 開発の環境構築の検証
 
 ## 4_verify_hot_reload
 
+- [WSL2 のポートへ localhost で接続する – 192.jp](https://192.jp/2020/08/23/connect-services-on-wsl-as-localhost/)
+  この設定してもうまくいかなかった
+- 接続できない原因は Rust 側のコードにあった
+  - [Rust+Docker で Web サーバーにアクセスできない #Docker - Qiita](https://qiita.com/Sicut_study/items/dc1f232895c9264386df)
+  - サーバー起動 IP を 0.0.0.0:3000 に変更
+    - windows で起動。windows から接続
+      - http://localhost:3000/：接続可能
+      - http://0.0.0.0:3000/：接続不可
+      - http://127.0.0.1:3000/：接続可能
+    - WSL2 上の docker で起動(ポート設定は 8080:3000)。WSL2 から接続
+      - curl localhost:8080：接続可能
+      - curl 0.0.0.0:8080：接続可能
+      - curl 127.0.0.1:8080：接続可能
+    - WSL2 上の docker で起動(ポート設定は 8080:3000)。windows から接続
+      - http://localhost:8080/：接続可能
+      - http://0.0.0.0:8080/：接続不可
+      - http://127.0.0.1:8080/：接続可能
+- localhost 周りの原理を勉強する必要がありそう
+- Windows 上の編集ではコンテナないの HotReload はできない。コンテナが動作している WSL が変更を検知出来ていないから
+  DevContainer で編集する必要がある
+- UbuntuPC 上でコンテナを建てると HotReload 可能
+- UbuntuPC の IP アドレスでアクセスできる
+
 ## 5_verify_sql
 
 - SQL とサーバーが稼働するプログラムを別々に起動する
