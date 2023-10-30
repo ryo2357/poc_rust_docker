@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  server:
+    image: 5_prod_server_image
+    container_name: 5_server_prod
+    build:
+      context: $PWD/server
+      dockerfile: $PWD/dockerfiles/server.dockerfile
+      target: production
+    tty: true
+    ports:
+      - 8080:3000

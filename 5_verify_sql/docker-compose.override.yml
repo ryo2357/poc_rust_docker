@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  server:
+    image: 5_dev_server_image
+    container_name: 5_server_dev
+    build:
+      context: $PWD/server
+      dockerfile: $PWD/dockerfiles/server.dockerfile
+      target: development
+    tty: true
+    volumes:
+      - $PWD/server:/usr/src/app
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+      - host-target-cache:/usr/src/app/target
+    environment:
+      CARGO_TARGET_DIR: /app/target
+      DATABASE_URL: mysql://root:password@5_db_dev:3306/diesel_demo
+    command: /bin/sh -c "cargo watch -x run"
+    ports:
+      - 8080:3000
+    networks:
+      - local
+    depends_on:
+      - db
+
+  db:
+    # 公式のイメージ
+    image: mysql:5.7
+    container_name: 5_db_dev
+    environment:
+      USER: root
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - "my_db_volume:/var/lib/mysql"
+    networks:
+      - local
+
+volumes:
+  cargo-cache:
+  host-target-cache:
+  target-cache:
+  my_db_volume:
+
+networks:
+  local:
