@@ -62,5 +62,11 @@ Docker 環境での Rust 開発の環境構築の検証
 - rust+docker+mysqlの検証
 - [diesel cli を利用して migration を実施ためす #MySQL - Qiita](https://qiita.com/Gma_Gama/items/a489be2207f0b35f9282)を参考
 - WSL2環境では生成ファイルのパーミッション問題が発生するのでコンテナのUID、GIDをWSL2用に設定
-- 
+- マイグレーションまで問題なくできることを確認
+
+## 6_devcontainer_setting
+
+- VSCodeのrust-analyzer等を動かすにはRustのインストールが必用  
+  ⇒dockerを使うのに環境を汚染するのは微妙
+- docker composeとDevcontainer環境の両立方法について検証
 

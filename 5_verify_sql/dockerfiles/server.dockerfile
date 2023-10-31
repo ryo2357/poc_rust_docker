@@ -3,7 +3,7 @@ ARG RUST_VERSION=1.73.0
 ARG APP_NAME=server
 
 # 開発環境
-FROM mcr.microsoft.com/devcontainers/rust:latest AS development
+FROM rust:${RUST_VERSION} AS development
 WORKDIR /usr/src/app
 
 # RUN groupadd -g ${GID} docker
