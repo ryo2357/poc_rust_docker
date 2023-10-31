@@ -6,6 +6,6 @@ services:
     container_name: 3_server_prod
     build:
       context: $PWD/server
-      dockerfile: $PWD/.devcontainer/server.dockerfile
+      dockerfile: $PWD/dockerfiles/server.dockerfile
       target: production
     tty: true
