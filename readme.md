@@ -66,7 +66,7 @@ Docker 環境での Rust 開発の環境構築の検証
 
 ## 6_devcontainer_setting
 
-- VSCodeのrust-analyzer等を動かすにはRustのインストールが必用  
-  ⇒dockerを使うのに環境を汚染するのは微妙
 - docker composeとDevcontainer環境の両立方法について検証
+- 開発で生成されるファイル、コンテナ内にインストールするファイルの権限の設定がうまくいかないため、WSL2をrootで運用   
+- HotReloadでの開発を想定しているのでVSCodeを稼働するコンテナを別に建ている
 

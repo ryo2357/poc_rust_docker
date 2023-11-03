@@ -1,0 +1,51 @@
+version: "3.7"
+
+services:
+  server:
+    image: 6_dev_server_image
+    #$UID:$GID
+    # コンテナで生成されるファイルをWSLでも編集するため
+    container_name: 6_server_dev
+    build:
+      # context: $PWD/server
+      # dockerfile: $PWD/.devcintainer/server.dockerfile
+      context: $PWD/server
+      dockerfile: $PWD/dockerfiles/server.dockerfile
+      target: development
+    tty: true
+    volumes:
+      - $PWD/server:/usr/src/app
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    environment:
+      CARGO_TARGET_DIR: /app/target
+      DATABASE_URL: mysql://root:password@db:3306/diesel_example
+    command: /bin/sh -c "cargo watch -x run"
+    ports:
+      - 8080:3000
+    networks:
+      - local
+    depends_on:
+      - db
+
+  db:
+    # 公式のイメージ
+    image: mysql:5.7
+    container_name: 6_db_dev
+    environment:
+      MYSQL_DATABASE: diesel_example
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - "my_db_volume:/var/lib/mysql"
+    networks:
+      - local
+
+volumes:
+  cargo-cache:
+  target-cache:
+  my_db_volume:
+
+networks:
+  local:
