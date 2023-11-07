@@ -66,7 +66,14 @@ Docker 環境での Rust 開発の環境構築の検証
 
 ## 6_devcontainer_setting
 
-- docker composeとDevcontainer環境の両立方法について検証
+- docker composeとDevcontainer開発環境の両立方法について検証
 - 開発で生成されるファイル、コンテナ内にインストールするファイルの権限の設定がうまくいかないため、WSL2をrootで運用   
 - HotReloadでの開発を想定しているのでVSCodeを稼働するコンテナを別に建ている
+
+## 7_develop_api_server
+
+- docker環境での開発の練習
+- 下記サイトを参考にして実装
+  - [Rust CRUD API Example with Axum Framework and MySQL 2023](https://codevoweb.com/rust-crud-api-example-with-axum-framework-and-mysql/)
+  - [Rust初心者がRust + actix-web + diesel(MySQL) + serdeでREST APIを作ってみた #MySQL - Qiita](https://qiita.com/c0ridrew/items/42bcf381766ba224eed7#rust%E7%92%B0%E5%A2%83%E6%A7%8B%E7%AF%89)
 
