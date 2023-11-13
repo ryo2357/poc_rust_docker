@@ -16,20 +16,19 @@ services:
     environment:
       CARGO_TARGET_DIR: /app/target
       DATABASE_URL: mysql://root:password@db:3306/docker_practice
-    command: /bin/sh -c "cargo watch -x run"
+    command: /bin/sh -c "sqlx migrate run && cargo watch -x run"
     ports:
       - 8080:3000
     networks:
       - local
     depends_on:
       - db
-
   db:
     # 公式のイメージ
     image: mysql:5.7
     container_name: 7_db_dev
     environment:
-      MYSQL_DATABASE: diesel_example
+      MYSQL_DATABASE: docker_practice
       MYSQL_ROOT_PASSWORD: password
     ports:
       - "3306:3306"
