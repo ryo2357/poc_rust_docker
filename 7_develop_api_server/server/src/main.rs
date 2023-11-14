@@ -2,6 +2,7 @@ use axum::{extract::State, response::Html, response::IntoResponse, routing::get,
 use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use dotenv::dotenv;
 
 mod handler;
 mod model;
@@ -15,6 +16,7 @@ pub struct AppState {
 #[tokio::main]
 async fn main() {
     // 設定値の取得
+    dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     // DBの作成
     let pool = match MySqlPoolOptions::new()

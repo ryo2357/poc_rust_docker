@@ -89,3 +89,42 @@ pub async fn note_list_handler(
 
     Ok(Json(json_response))
 }
+
+pub async fn get_note_handler(
+    Path(id): Path<uuid::Uuid>,
+    State(data): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    // let query_result = sqlx::query_as!(
+    //     NoteModel,
+    //     r#"SELECT * FROM notes WHERE id = ?"#,
+    //     id.to_string()
+    // )
+    // .fetch_one(&data.db)
+    // .await;
+
+    let query = format!("SELECT * FROM notes WHERE id = '{}'", id);
+    let query_result = sqlx::query_as::<_, NoteModel>(&query)
+        .fetch_one(&data.db)
+        .await;
+
+    match query_result {
+        Ok(note) => {
+            let note_response = serde_json::json!({"status": "success","data": serde_json::json!({
+                "note": filter_db_record(&note)
+            })});
+
+            Ok(Json(note_response))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            let error_response = serde_json::json!({
+                "status": "fail",
+                "message": format!("Note with ID: {} not found", id)
+            });
+            Err((StatusCode::NOT_FOUND, Json(error_response)))
+        }
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"status": "error","message": format!("{:?}", e)})),
+        )),
+    }
+}
