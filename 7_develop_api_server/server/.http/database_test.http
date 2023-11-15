@@ -1,0 +1,171 @@
+###
+# 2. レコードを挿入するハンドラー
+POST http://localhost:3000/api/notes/ HTTP/1.1
+content-type: application/json
+
+{
+  "title": "You'll learn how to build a CRUD API with FastAPI",
+  "content": "Fastapi is really easy to use",
+  "category": "FastAPI"
+}
+
+# {
+#   "name": "Create Note",
+#   "request": {
+#   "method": "POST",
+#   "header": [],
+#     "body": {
+#       "mode": "raw",
+#       "raw": "{\r\n    \"title\": \"You'll learn how to build a CRUD API with FastAPI\",\r\n    \"content\": \"Fastapi is really easy to use\",\r\n    \"category\": \"FastAPI\"\r\n}",
+#       "options": {
+#         "raw": {
+#           "language": "json"
+#         }
+#       }
+#     },
+#     "url": {
+#       "raw": "http://localhost:8000/api/notes/",
+#       "protocol": "http",
+#       "host": [
+#         "localhost"
+#       ],
+#       "port": "8000",
+#       "path": [
+#         "api",
+#         "notes",
+#         ""
+#       ]
+#     }
+#   },
+#   "response": []
+# },
+
+
+
+###
+# // 3. レコードを取得するハンドラー
+GET http://localhost:3000/api/notes/bee65b8b-283e-4fbd-96ca-1432f3df3999  HTTP/1.1
+# {
+#   "name": "Get  Note",
+#   "request": {
+#     "method": "GET",
+#     "header": [],
+#     "url": {
+#       "raw": "http://localhost:8000/api/notes/cc5ff528-5352-4ba3-9b75-962dc5dacf2f",
+#       "protocol": "http",
+#       "host": [
+#         "localhost"
+#       ],
+#       "port": "8000",
+#       "path": [
+#         "api",
+#         "notes",
+#         "cc5ff528-5352-4ba3-9b75-962dc5dacf2f"
+#       ]
+#     }
+#   },
+#   "response": []
+# },
+
+
+###
+# 4. レコードを編集するためのハンドラー
+PATCH http://localhost:3000/api/notes/5b268ce3-3b21-4aaf-ad4d-50911d85693d  HTTP/1.1
+content-type: application/json
+
+{
+  "title": "✅✅👇👇This article will teach Django REST framework"
+}
+
+# {
+#   "name": "Update  Note",
+#   "request": {
+#     "method": "PATCH",
+#     "header": [],
+#     "body": {
+#       "mode": "raw",
+#       "raw": "{\r\n    \"title\": \"✅✅👇👇This article will teach Django REST framework\"\r\n}",
+#       "options": {
+#         "raw": {
+#           "language": "json"
+#         }
+#       }
+#     },
+#     "url": {
+#       "raw": "http://localhost:8000/api/notes/77a9ac3c-7e3b-40c1-b2d4-30729c931d3d",
+#       "protocol": "http",
+#       "host": [
+#         "localhost"
+#       ],
+#       "port": "8000",
+#       "path": [
+#         "api",
+#         "notes",
+#         "77a9ac3c-7e3b-40c1-b2d4-30729c931d3d"
+#       ]
+#     }
+#   }
+# }
+
+###
+# 1. すべてのレコードを取得するハンドラー
+GET http://localhost:3000/api/notes  HTTP/1.1
+  ?page=1
+  &limit=10
+
+# {
+#   "name": "Get All  Notes",
+#   "request": {
+#     "method": "GET",
+#     "header": [],
+#     "url": {
+#       "raw": "http://localhost:8000/api/notes?page=1&limit=10",
+#       "protocol": "http",
+#       "host": [
+#         "localhost"
+#       ],
+#       "port": "8000",
+#       "path": [
+#         "api",
+#         "notes"
+#       ],
+#       "query": [
+#         {
+#           "key": "page",
+#           "value": "1"
+#         },
+#         {
+#           "key": "limit",
+#           "value": "10"
+#         }
+#       ]
+#     }
+#   },
+#   "response": []
+# }
+
+###
+# 5. レコードを削除するハンドラー
+DELETE http://localhost:3000/api/notes/6557980b-0756-4a30-9df4-b2e5b9a2e28f HTTP/1.1
+
+# {
+#   "name": "Delete  Note",
+#   "request": {
+#     "method": "DELETE",
+#     "header": [],
+#     "url": {
+#       "raw": "http://localhost:8000/api/notes/04aae95f-de90-4a39-9610-83b84485a042",
+#       "protocol": "http",
+#       "host": [
+#         "localhost"
+#       ],
+#       "port": "8000",
+#       "path": [
+#         "api",
+#         "notes",
+#         "04aae95f-de90-4a39-9610-83b84485a042"
+#       ]
+#     }
+#   },
+#   "response": []
+# }

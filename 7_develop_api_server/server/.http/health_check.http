@@ -1,0 +1,16 @@
+###
+# ヘルスチェック
+http://localhost:3000/
+
+###
+# htmlの要求
+http://localhost:3000/hello
+
+###
+# htmlの要求
+http://localhost:3000/hello/url
+
+###
+# ヘルスチェック
+http://localhost:3000/api/healthchecker
+

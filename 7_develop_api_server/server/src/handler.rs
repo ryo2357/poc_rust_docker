@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
+    response::Html,
     response::IntoResponse,
     Json,
 };
@@ -26,7 +27,33 @@ fn filter_db_record(note: &NoteModel) -> NoteModelResponse {
         updatedAt: note.updated_at.unwrap(),
     }
 }
+// 動作検証用のハンドラー
+pub async fn handler() -> Html<&'static str> {
+    Html("<h1>Hello, World!</h1>")
+}
 
+pub async fn url_handler(State(state): State<Arc<AppState>>) -> Html<String> {
+    let html_string: String = format!(
+        "<h1>Hello, World!</h1>\
+        <p>DatabaseUrl : {:?}</p>\
+    ",
+        &state.as_ref().database_url
+    );
+    Html(html_string)
+}
+
+pub async fn health_checker_handler() -> impl IntoResponse {
+    const MESSAGE: &str = "Rust CRUD API Example with Axum Framework and MySQL";
+
+    let json_response = serde_json::json!({
+        "status": "success",
+        "message": MESSAGE
+    });
+
+    Json(json_response)
+}
+
+// 1. すべてのレコードを取得するハンドラー
 pub async fn note_list_handler(
     opts: Option<Query<FilterOptions>>,
     State(data): State<Arc<AppState>>,
@@ -52,7 +79,7 @@ pub async fn note_list_handler(
     //     (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
     // })?;
 
-    let notes = sqlx::query("SELECT * FROM notes ORDER by id LIMIT $1 OFFSET $2")
+    let notes = sqlx::query("SELECT * FROM notes ORDER by id LIMIT ? OFFSET ?")
         .bind(limit as i32)
         .bind(offset as i32)
         .try_map(|row: sqlx::mysql::MySqlRow| {
@@ -89,7 +116,66 @@ pub async fn note_list_handler(
 
     Ok(Json(json_response))
 }
+// 2. レコードを挿入するハンドラー
+pub async fn create_note_handler(
+    State(data): State<Arc<AppState>>,
+    Json(body): Json<CreateNoteSchema>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    let user_id = uuid::Uuid::new_v4().to_string();
+    let query_result =
+        sqlx::query(r#"INSERT INTO notes (id,title,content,category) VALUES (?, ?, ?, ?)"#)
+            .bind(user_id.clone())
+            .bind(body.title.to_string())
+            .bind(body.content.to_string())
+            .bind(body.category.to_owned().unwrap_or_default())
+            .execute(&data.db)
+            .await
+            .map_err(|err: sqlx::Error| err.to_string());
 
+    if let Err(err) = query_result {
+        if err.contains("Duplicate entry") {
+            let error_response = serde_json::json!({
+                "status": "fail",
+                "message": "Note with that title already exists",
+            });
+            return Err((StatusCode::CONFLICT, Json(error_response)));
+        }
+
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"status": "error","message": format!("{:?}", err)})),
+        ));
+    }
+
+    // let note = sqlx::query_as!(NoteModel, r#"SELECT * FROM notes WHERE id = ?"#, user_id)
+    //     .fetch_one(&data.db)
+    //     .await
+    //     .map_err(|e| {
+    //         (
+    //             StatusCode::INTERNAL_SERVER_ERROR,
+    //             Json(json!({"status": "error","message": format!("{:?}", e)})),
+    //         )
+    //     })?;
+
+    let query = format!("SELECT * FROM notes WHERE id = '{}'", user_id);
+    let note = sqlx::query_as::<_, NoteModel>(&query)
+        .fetch_one(&data.db)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"status": "error","message": format!("{:?}", e)})),
+            )
+        })?;
+
+    let note_response = serde_json::json!({"status": "success","data": serde_json::json!({
+        "note": filter_db_record(&note)
+    })});
+
+    Ok(Json(note_response))
+}
+
+// 3. レコードを取得するハンドラー
 pub async fn get_note_handler(
     Path(id): Path<uuid::Uuid>,
     State(data): State<Arc<AppState>>,
@@ -127,4 +213,145 @@ pub async fn get_note_handler(
             Json(json!({"status": "error","message": format!("{:?}", e)})),
         )),
     }
+}
+
+// 4. レコードを編集するためのハンドラー
+
+pub async fn edit_note_handler(
+    Path(id): Path<uuid::Uuid>,
+    State(data): State<Arc<AppState>>,
+    Json(body): Json<UpdateNoteSchema>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    // let query_result = sqlx::query_as!(
+    //     NoteModel,
+    //     r#"SELECT * FROM notes WHERE id = ?"#,
+    //     id.to_string()
+    // )
+    // .fetch_one(&data.db)
+    // .await;
+    let query = format!("SELECT * FROM notes WHERE id = '{}'", id);
+    let query_result = sqlx::query_as::<_, NoteModel>(&query)
+        .fetch_one(&data.db)
+        .await;
+
+    let note = match query_result {
+        Ok(note) => note,
+        Err(sqlx::Error::RowNotFound) => {
+            let error_response = serde_json::json!({
+                "status": "fail",
+                "message": format!("Note with ID: {} not found", id)
+            });
+            return Err((StatusCode::NOT_FOUND, Json(error_response)));
+        }
+        Err(e) => {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"status": "error","message": format!("{:?}", e)})),
+            ));
+        }
+    };
+
+    let published = body.published.unwrap_or(note.published != 0);
+    let i8_published = published as i8;
+
+    let update_result = sqlx::query(
+        r#"UPDATE notes SET title = ?, content = ?, category = ?, published = ? WHERE id = ?"#,
+    )
+    .bind(body.title.to_owned().unwrap_or_else(|| note.title.clone()))
+    .bind(
+        body.content
+            .to_owned()
+            .unwrap_or_else(|| note.content.clone()),
+    )
+    .bind(
+        body.category
+            .to_owned()
+            .unwrap_or_else(|| note.category.clone().unwrap()),
+    )
+    .bind(i8_published)
+    .bind(id.to_string())
+    .execute(&data.db)
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"status": "error","message": format!("{:?}", e)})),
+        )
+    })?;
+
+    if update_result.rows_affected() == 0 {
+        let error_response = serde_json::json!({
+            "status": "fail",
+            "message": format!("Note with ID: {} not found", id)
+        });
+        return Err((StatusCode::NOT_FOUND, Json(error_response)));
+    }
+
+    // 挿入後、データベースに問い合わせを行う。挿入IDの結果を返す
+
+    // let updated_note = sqlx::query_as!(
+    //     NoteModel,
+    //     r#"SELECT * FROM notes WHERE id = ?"#,
+    //     id.to_string()
+    // )
+    // .fetch_one(&data.db)
+    // .await
+    // .map_err(|e| {
+    //     (
+    //         StatusCode::INTERNAL_SERVER_ERROR,
+    //         Json(json!({"status": "error","message": format!("{:?}", e)})),
+    //     )
+    // })?;
+
+    let query = format!("SELECT * FROM notes WHERE id = '{}'", id);
+    let updated_note = sqlx::query_as::<_, NoteModel>(&query)
+        .fetch_one(&data.db)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"status": "error","message": format!("{:?}", e)})),
+            )
+        })?;
+
+    let note_response = serde_json::json!({"status": "success","data": serde_json::json!({
+        "note": filter_db_record(&updated_note)
+    })});
+
+    Ok(Json(note_response))
+}
+
+// 5. レコードを削除するハンドラー
+pub async fn delete_note_handler(
+    Path(id): Path<uuid::Uuid>,
+    State(data): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    // let query_result = sqlx::query!(r#"DELETE FROM notes WHERE id = ?"#, id.to_string())
+    //     .execute(&data.db)
+    //     .await
+    //     .map_err(|e| {
+    //         (
+    //             StatusCode::INTERNAL_SERVER_ERROR,
+    //             Json(json!({"status": "error","message": format!("{:?}", e)})),
+    //         )
+    //     })?;
+    let query = format!("DELETE FROM notes WHERE id = '{}'", id);
+    let query_result = sqlx::query(&query).execute(&data.db).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"status": "error","message": format!("{:?}", e)})),
+        )
+    })?;
+
+    if query_result.rows_affected() == 0 {
+        let error_response = serde_json::json!({
+            "status": "fail",
+            "message": format!("Note with ID: {} not found", id)
+        });
+        return Err((StatusCode::NOT_FOUND, Json(error_response)));
+    }
+
+    // 削除できたら202を返す
+    Ok(StatusCode::NO_CONTENT)
+    // Ok(StatusCode::OK)
 }

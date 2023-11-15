@@ -1,17 +1,24 @@
-use axum::{extract::State, response::Html, response::IntoResponse, routing::get, Json, Router};
+use axum::http::{
+    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
+    HeaderValue, Method,
+};
+use dotenv::dotenv;
 use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
 use std::net::SocketAddr;
 use std::sync::Arc;
-use dotenv::dotenv;
+use tower_http::cors::CorsLayer;
 
 mod handler;
 mod model;
+mod route;
 mod schema;
 
 pub struct AppState {
     database_url: String,
     db: MySqlPool,
 }
+
+use route::create_router;
 
 #[tokio::main]
 async fn main() {
@@ -40,14 +47,16 @@ async fn main() {
     };
     let shared_state = Arc::new(state);
 
-    // アプリ部
-    // let app = Router::new().route("/", get(handler));
-    let app = Router::new()
-        .route("/", get(health_checker_handler))
-        .route("/hello", get(handler))
-        .route("/hello/url", get(url_handler))
-        .route("/api/healthchecker", get(health_checker_handler))
-        .with_state(shared_state);
+    // CROSについて調べる
+    // [CORS関連、これだけ知っとけばまぁ大丈夫 #xhr - Qiita](https://qiita.com/rooooomania/items/4d0f6275372f413765de#cors%E3%81%A8%E3%83%A6%E3%83%BC%E3%82%B6%E8%AA%8D%E8%A8%BC%E6%83%85%E5%A0%B1)
+
+    let cors = CorsLayer::new()
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
+        .allow_credentials(true)
+        .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
+
+    let app = create_router(shared_state).layer(cors);
 
     // run it
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
@@ -56,29 +65,4 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
-}
-
-async fn handler() -> Html<&'static str> {
-    Html("<h1>Hello, World!</h1>")
-}
-
-async fn url_handler(State(state): State<Arc<AppState>>) -> Html<String> {
-    let html_string: String = format!(
-        "<h1>Hello, World!</h1>\
-        <p>DatabeseUrl : {:?}</p>\
-    ",
-        &state.as_ref().database_url
-    );
-    Html(html_string)
-}
-
-async fn health_checker_handler() -> impl IntoResponse {
-    const MESSAGE: &str = "Rust CRUD API Example with Axum Framework and MySQL";
-
-    let json_response = serde_json::json!({
-        "status": "success",
-        "message": MESSAGE
-    });
-
-    Json(json_response)
 }
